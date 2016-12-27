@@ -17,7 +17,7 @@ body {
     <div id=container></div>
     <script>
 // http://konvajs.github.io/docs/sandbox/Wheel_of_Fortune.html
-let width = window.innerWidth, height = window.innerHeight;
+let width = window.innerWidth, height = window.innerHeight, fps = 5;
 let cache = {};
 const rect = colors=>new Promise((resolve, reject)=>{
   let id = 'r_'+colors.join('|');
@@ -176,16 +176,23 @@ for (let g=0; g<256; g++)
     tasks.push(rect(['rgb(240,0,0)', `rgb(0,${green},0)`]));
 }
 
+window.location.search.match(/^\??(.*)/)[1].split('&').map(pair=>pair.split('=')).forEach(pair=>{
+  switch(pair[0])
+  {
+  case 'fps':
+    fps = (+pair[1])||5;
+    break;
+  }
+});
+
 Promise.all(tasks).then(()=>update()).then(()=>{
   stage.add(layer);
-  let time = 0;
+  let time = 0, frame_delay = 1000/fps;
   let anim = new Konva.Animation(function(frame){
     time += frame.timeDiff;
-    i = (i+Math.floor(time/200))%rects.length;
-    time = time%200;
+    i = (i+Math.floor(time/frame_delay))%rects.length;
+    time = time%frame_delay;
     rects.forEach((r, index)=>i==index ? r.show() : r.hide());
-    if (0 && frame.time>=10000)
-      anim.stop();
   }, layer);
   anim.start();
   window.onload = function(){
