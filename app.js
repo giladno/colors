@@ -6,6 +6,9 @@ let size = 320;
 let center = {x: 0.5, y: 0.5};
 let cache = {};
 
+let rgb = (r, g, b)=>{
+    return `rgb(${r},${g},${b})`;
+};
 window.location.search.match(/^\??(.*)/)[1].split('&').map(pair=>pair.split('=')).forEach(pair=>{
     switch(pair[0])
     {
@@ -23,6 +26,17 @@ window.location.search.match(/^\??(.*)/)[1].split('&').map(pair=>pair.split('=')
         break;
     case 'center_y':
         center.y = (+pair[1])||0.5;
+        break;
+    case 'color':
+        if (pair[1]=='blue')
+        {
+            rgb = (r, g, b)=>{
+                let c = g;
+                g = b;
+                b = c;
+                return `rgb(${r},${g},${b})`;
+            };
+        }
         break;
     }
 });
@@ -165,14 +179,13 @@ if (progress)
     layer.add(progress.thumb);
 }
 
-const RGB = (r, g, b)=>`rgb(${r},${g},${b})`;
 const update = ()=>Promise.all([
-    rect([`rgb(0,${green},0)`, 'rgb(240,0,0)']),
-    grid(['rgb(255,0,0)', `rgb(0,${Math.round(green*17/16)},0)`,
-        'rgb(225,0,0)', `rgb(0,${Math.round(green*15/16)},0)`]),
-    rect(['rgb(240,0,0)', `rgb(0,${green},0)`]),
-    grid([`rgb(0,${Math.round(green*17/16)},0)`, 'rgb(255,0,0)',
-        `rgb(0,${Math.round(green*15/16)},0)`, 'rgb(225,0,0)']),
+    rect([rgb(0,green,0), rgb(240,0,0)]),
+    grid([rgb(255,0,0), rgb(0,Math.round(green*17/16),0),
+        rgb(225,0,0), rgb(0,Math.round(green*15/16),0)]),
+    rect([rgb(240,0,0), rgb(0,green,0)]),
+    grid([rgb(0,Math.round(green*17/16),0), rgb(255,0,0),
+        rgb(0,Math.round(green*15/16),0), rgb(225,0,0)]),
 ]).then(res=>{
     rects.forEach(r=>r.destroy());
     (rects = res).forEach((r, index)=>{
@@ -187,8 +200,8 @@ const update = ()=>Promise.all([
 let tasks = [];
 for (let g=0; g<256; g++)
 {
-    tasks.push(rect([`rgb(0,${green},0)`, 'rgb(240,0,0)']));
-    tasks.push(rect(['rgb(240,0,0)', `rgb(0,${green},0)`]));
+    tasks.push(rect([rgb(0,green,0), rgb(240,0,0)]));
+    tasks.push(rect([rgb(240,0,0), rgb(0,green,0)]));
 }
 
 Promise.all(tasks).then(()=>update()).then(()=>{
@@ -236,7 +249,7 @@ Promise.all(tasks).then(()=>update()).then(()=>{
                                     ((avg[0]+avg[1])/2).toFixed(4));
                             }
                             peaks.push([]);
-                            green = 0;
+                            green = 64;
                             step = 64;
                             code = 0;
                             return peaks.length<3 && update().then(()=>{
