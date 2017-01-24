@@ -3,6 +3,7 @@ let width = window.innerWidth, height = window.innerHeight;
 let fps = 5;
 let duration = 2000;
 let size = 320;
+let center = {x: 0.5, y: 0.5};
 let cache = {};
 
 window.location.search.match(/^\??(.*)/)[1].split('&').map(pair=>pair.split('=')).forEach(pair=>{
@@ -16,6 +17,12 @@ window.location.search.match(/^\??(.*)/)[1].split('&').map(pair=>pair.split('=')
         break;
     case 'duration':
         duration = (+pair[1])||2000;
+        break;
+    case 'center_x':
+        center.x = (+pair[1])||0.5;
+        break;
+    case 'center_y':
+        center.y = (+pair[1])||0.5;
         break;
     }
 });
@@ -51,8 +58,8 @@ const rect = colors=>new Promise((resolve, reject)=>{
         callback: img=>resolve(cache[id] = new Konva.Image({
             image: img,
             listening: false,
-            x: (width-size)/2,
-            y: (height-size)/2,
+            x: width*center.x-size/2,
+            y: height*center.y-size/2,
         })),
     });
 });
@@ -100,8 +107,8 @@ const grid = colors=>new Promise((resolve, reject)=>{
         callback: img=>resolve(cache[id] = new Konva.Image({
             image: img,
             listening: false,
-            x: (width-size)/2,
-            y: (height-size)/2,
+            x: width*center.x-size/2,
+            y: height*center.y-size/2,
         })),
     });
 });
