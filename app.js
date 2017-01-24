@@ -157,9 +157,15 @@ progress.thumb.on('dragmove', e=>{
     update();
 });
 
-layer.add(progress.bar);
-layer.add(progress.thumb);
+progress = null;
 
+if (progress)
+{
+    layer.add(progress.bar);
+    layer.add(progress.thumb);
+}
+
+const RGB = (r, g, b)=>`rgb(${r},${g},${b})`;
 const update = ()=>Promise.all([
     rect([`rgb(0,${green},0)`, 'rgb(240,0,0)']),
     grid(['rgb(255,0,0)', `rgb(0,${Math.round(green*17/16)},0)`,
@@ -168,7 +174,6 @@ const update = ()=>Promise.all([
     grid([`rgb(0,${Math.round(green*17/16)},0)`, 'rgb(255,0,0)',
         `rgb(0,${Math.round(green*15/16)},0)`, 'rgb(225,0,0)']),
 ]).then(res=>{
-    res = res.filter(i=>i);
     rects.forEach(r=>r.destroy());
     (rects = res).forEach((r, index)=>{
         layer.add(r);
@@ -188,18 +193,75 @@ for (let g=0; g<256; g++)
 
 Promise.all(tasks).then(()=>update()).then(()=>{
     stage.add(layer);
-    let time = 0, frame_delay = 1000/fps;
-    let anim = new Konva.Animation(function(frame){
-        time += frame.timeDiff;
-        i = (i+Math.floor(time/frame_delay))%rects.length;
-        time = time%frame_delay;
-        rects.forEach((r, index)=>i==index ? r.show() : r.hide());
-    }, layer);
+    let time = 0, frame_delay = 1000/fps, step = 64, code = 0;
+    const animation = ()=>{
+        time = 0;
+        return new Konva.Animation(function(frame){
+            time += frame.timeDiff;
+            i = (i+Math.floor(time/frame_delay))%rects.length;
+            if (!i && frame.time>=duration)
+                return this.stop();
+            time = time%frame_delay;
+            rects.forEach((r, index)=>i==index ? r.show() : r.hide());
+        }, layer);
+    };
+
+    let anim = animation();
     anim.start();
-    if (duration)
-        setTimeout(()=>anim.stop(), duration);
     window.onload = function(){
+        let peaks = [[]];
         document.addEventListener('keydown', function(e){
+            if (e.keyCode==37 || e.keyCode==39)
+            {
+                if (peaks.length>2)
+                    return;
+                if (!anim)
+                    return;
+                anim.stop();
+                anim = null;
+                i = 0;
+                if (e.keyCode!=code)
+                {
+                    step = Math.max(step/2, 4);
+                    if (step==4)
+                    {
+                        peaks[peaks.length-1].push(green);
+                        if (peaks[peaks.length-1].length==3)
+                        {
+                            console.log(peaks);
+                            if (peaks.length==2)
+                            {
+                                let avg = peaks.map(a=>240/((a[0]+a[1]+a[2])/3));
+                                console.log('Upper:', avg[0].toFixed(4), 'Lower:', avg[1].toFixed(4), 'Score:',
+                                    ((avg[0]+avg[1])/2).toFixed(4));
+                            }
+                            peaks.push([]);
+                            green = 0;
+                            step = 64;
+                            code = 0;
+                            return peaks.length<3 && update().then(()=>{
+                                anim = animation();
+                                anim.start();
+                            });
+                        }
+                    }
+                }
+                code = e.keyCode;
+                if (code==37)
+                    green -= step;
+                else
+                    green += step;
+                green = Math.max(Math.min(green, 240), 0);
+                console.log(green);
+                update().then(()=>{
+                    anim = animation();
+                    anim.start();
+                });
+            }
+
+
+            if (!progress)
+                return;
             if (e.keyCode==37) // left
                 green = Math.max(green-1, 0);
             else if (e.keyCode==39) // right
