@@ -1,4 +1,11 @@
 // http://konvajs.github.io/docs/sandbox/Wheel_of_Fortune.html
+$(function(){
+    function output(){
+        let args = [].slice.call(arguments);
+        console.log.apply(console, args);
+        let text = args.join(' ');
+        $('#output').append(text+'\n');
+    }
 let width = window.innerWidth, height = window.innerHeight;
 let fps = 5;
 let duration = 2000;
@@ -221,7 +228,6 @@ Promise.all(tasks).then(()=>update()).then(()=>{
 
     let anim = animation();
     anim.start();
-    window.onload = function(){
         let peaks = [[]];
         document.addEventListener('keydown', function(e){
             if (e.keyCode==37 || e.keyCode==39)
@@ -241,11 +247,11 @@ Promise.all(tasks).then(()=>update()).then(()=>{
                         peaks[peaks.length-1].push(green);
                         if (peaks[peaks.length-1].length==3)
                         {
-                            console.log(peaks);
+                            output(peaks);
                             if (peaks.length==2)
                             {
                                 let avg = peaks.map(a=>240/((a[0]+a[1]+a[2])/3));
-                                console.log('Upper:', avg[0].toFixed(4), 'Lower:', avg[1].toFixed(4), 'Score:',
+                                output('Upper:', avg[0].toFixed(4), 'Lower:', avg[1].toFixed(4), 'Score:',
                                     ((avg[0]+avg[1])/2).toFixed(4));
                             }
                             peaks.push([]);
@@ -265,7 +271,7 @@ Promise.all(tasks).then(()=>update()).then(()=>{
                 else
                     green += step;
                 green = Math.max(Math.min(green, 240), 0);
-                console.log(green);
+                output(green);
                 update().then(()=>{
                     anim = animation();
                     anim.start();
@@ -284,5 +290,5 @@ Promise.all(tasks).then(()=>update()).then(()=>{
             progress.thumb.x((width-256)/2+green);
             update();
         }, false);
-    };
+});
 });
